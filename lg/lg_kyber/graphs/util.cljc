@@ -1,0 +1,32 @@
+(ns lg.lg-kyber.graphs.util
+  "Shared pure helpers for the kyber graph ports — the host-independent string/number
+  shapes the python produced (date.today().isoformat(), str(x)[:n], ¥{n:,})."
+  (:require [clojure.string :as str]))
+
+(defn today-iso
+  "date.today().isoformat() — ISO-8601 yyyy-MM-dd (UTC date)."
+  []
+  #?(:clj (str (java.time.LocalDate/now java.time.ZoneOffset/UTC))
+     :default (throw (ex-info "bind a today-iso impl on this host" {}))))
+
+(defn truncate
+  "Python str(x)[:n] — string-cast then take the first n chars."
+  [x n]
+  (let [s (str x)]
+    (subs s 0 (min n (count s)))))
+
+(defn group-thousands
+  "Python format ¥{n:,} — group integer digits in threes with commas."
+  [n]
+  (let [neg? (neg? n)
+        digits (str (abs (long n)))
+        len (count digits)
+        grouped (->> (range len)
+                     (map (fn [i]
+                            (let [c (nth digits i)
+                                  pos-from-end (- len i)]
+                              (if (and (pos? i) (zero? (mod pos-from-end 3)))
+                                (str "," c)
+                                (str c)))))
+                     (apply str))]
+    (str (when neg? "-") grouped)))
