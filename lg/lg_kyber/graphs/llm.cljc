@@ -13,7 +13,7 @@
   the `:llm-api` injection seam: a graph reads `{:call-json …}` out of its state and
   calls it, so tests inject `mock-llm` and production uses `live-llm`."
   (:require [cheshire.core :as json]
-            [clojure.string :as str]))
+            [kotoba.lang.text :as str]))
 
 ;; key under which a graph carries its injected llm-api in the state map
 (def llm-api-key ::llm-api)
