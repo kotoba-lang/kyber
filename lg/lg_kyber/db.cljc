@@ -16,7 +16,7 @@
   This mirrors the repo's `:db-api` convention (CLAUDE.md §Actors: backends speak through
   a `{:q :transact! :db :pull :entid}`-style map; here it is the narrower fetch/exec trio
   the kyber graphs use)."
-  (:require [clojure.string :as str]))
+  (:require [kotoba.lang.text :as str]))
 
 ;; key under which a graph carries its injected db-api in the state map
 (def db-api-key ::db-api)

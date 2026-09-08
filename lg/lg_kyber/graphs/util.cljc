@@ -1,7 +1,7 @@
 (ns lg.lg-kyber.graphs.util
   "Shared pure helpers for the kyber graph ports — the host-independent string/number
   shapes the python produced (date.today().isoformat(), str(x)[:n], ¥{n:,})."
-  (:require [clojure.string :as str]))
+  (:require [kotoba.lang.text :as str]))
 
 (defn today-iso
   "date.today().isoformat() — ISO-8601 yyyy-MM-dd (UTC date)."
