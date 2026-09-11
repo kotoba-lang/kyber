@@ -6,7 +6,7 @@
  ;;   lg/lg_kyber/graphs/<x>.cljc  ⇒  ns  lg.lg-kyber.graphs.<x>
  ;; (the porter-tool convention already used by business_operating_react.cljc).
  ;;
- ;;   bb run_tests.clj        # green = the ported graphs load + invoke under bb
+ ;;   bb run_tests.cljk        # green = the ported graphs load + invoke under bb
  :paths ["."]
  :deps {com-junkawasaki/langchain-clj
         {:git/url "https://github.com/com-junkawasaki/langchain-clj"
@@ -16,4 +16,4 @@
          :git/sha "c7daa07d4e50f55d7e2a02e4b89dbeb2b200961d"}}
  :tasks
  {test {:doc "Run the lg-kyber clj graph test-suite (clojure.test, bb)."
-        :task (load-file "run_tests.clj")}}}
+        :task (load-file "run_tests.cljk")}}}
