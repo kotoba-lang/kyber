@@ -39,7 +39,7 @@
 
 (deftest test-http-llm-capability
   (testing "missing HTTP capabilities fail closed before network access"
-    (is (thrown-with-msg? clojure.lang.ExceptionInfo #"explicit HTTP capabilities"
+    (is (thrown-with-msg? #?(:clj clojure.lang.ExceptionInfo :default ExceptionInfo) #"explicit HTTP capabilities"
                           (llm/call-llm-json-with nil nil {} "p" {}))))
   (testing "explicit Murakumo capability preserves JSON wire behavior"
     (let [seen (atom [])

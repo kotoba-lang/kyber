@@ -1,39 +1,55 @@
 #!/usr/bin/env kbb
-;; lg-kyber — bb-native test runner (Clojure / babashka; NOT shell, per repo rule
-;; "New actors ship run_tests.cljk, not run_tests.sh"). Run from the app dir so the
-;; scoped bb.edn (langgraph-clj/langchain-clj deps + classpath root) is picked up:
+;; lg-kyber — kbb-native test runner (Clojure-shaped .cljk; NOT shell, per repo
+;; rule "New actors ship run_tests.cljk, not run_tests.sh"). Run from the app dir:
 ;;
-;;   cd 60-apps/etzhayyim-project-kyber && kbb run_tests.cljk
-;;   # or: bb test
+;;   cd <kyber app dir> && kbb --backend sci --classpath . run_tests.cljk
 ;;
-;; Classpath root = this file's dir (the app dir), so a co-located .cljc at
-;;   lg/lg_kyber/graphs/<x>.cljc  ⇒  ns  lg.lg-kyber.graphs.<x>.
-(require '[babashka.classpath :as cp]
-         '[babashka.fs :as fs]
-         '[babashka.http-client :as http]
-         '[clojure.test :as t])
+;; kbb-engine notes (ADR-2609112000 cut the repo to .cljk):
+;; - the engine resolves .cljk namespaces from --classpath, so this runner adds
+;;   its own dir (and $KBB_CLASSPATH entries) before requiring the suites;
+;; - babashka.classpath / babashka.http-client are NOT exposed by the engine,
+;;   so classpath and env access go through nbb.classpath / js/process.
+(require '[clojure.test :as t])
 
-(cp/add-classpath (str (fs/parent (fs/absolutize *file*))))
+(def ^:private root-dir
+  (let [f (str *file*)
+        i (clojure.string/last-index-of f "/")]
+    (if (and i (pos? i)) (subs f 0 i) ".")))
 
-(def suites '[lg.lg-kyber.tests.test-graphs])
+(def ^:private cp-entries
+  (let [env-cp (or (try (aget js/process "env" "KBB_CLASSPATH") (catch :default _ nil)) ".")]
+    (clojure.string/split env-cp #":")))
+
+(doseq [e (distinct (conj cp-entries root-dir))]
+  (nbb.classpath/add-classpath e))
+
+(defn- getenv [name default]
+  (or (try (aget js/process "env" name) (catch :default _ nil)) default))
+
+(def ^:private http
+  {:get (fn [url opts] (js/fetch url))
+   :post (fn [url opts] (js/fetch url (clj->js {:method "POST" :body (:body opts)})))})
+
+(def suites '[lg.lg-kyber.tests.test-graphs
+              lg.lg-kyber.tests.test-org-risk])
 
 (apply require suites)
 
-(defn- env [name default] (or (System/getenv name) default))
-
 (def live-llm
   ((resolve 'lg.lg-kyber.graphs.llm/http-llm)
-   http/get http/post
-   {:murakumo-base-url (env "MURAKUMO_BASE_URL" "https://murakumo.etzhayyim.com")
-    :openrouter-key (System/getenv "OPENROUTER_API_KEY")}))
+   (:get http) (:post http)
+   {:murakumo-base-url (getenv "MURAKUMO_BASE_URL" "https://murakumo.etzhayyim.com")
+    :openrouter-key (getenv "OPENROUTER_API_KEY" nil)}))
 
 (defn live-notify [args]
-  (let [webhook (System/getenv "TEAMS_KYBER_WEBHOOK_URL")
+  (let [webhook (getenv "TEAMS_KYBER_WEBHOOK_URL" nil)
         notify-with (resolve 'lg.lg-kyber.graphs.business-operating-react/notify-with)]
-    (notify-with http/post webhook args)))
+    (notify-with (:post http) webhook args)))
+
+(defn- exit! [code] (js/process.exit code))
 
 (let [{:keys [fail error]} (apply t/run-tests suites)]
   (if (zero? (+ fail error))
     (println "── lg-kyber: ALL suites green ──")
     (do (println "── lg-kyber: FAILURES above ──")
-        (System/exit 1))))
+        (exit! 1))))

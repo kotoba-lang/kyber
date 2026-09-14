@@ -61,7 +61,7 @@
                            :body (json/parse-string true))
                   content (strip-think (get-in resp [:choices 0 :message :content]))]
               [(json/parse-string content false) "llm"]))
-          (catch Exception _ nil))]
+          (catch #?(:clj Exception :default :default) _ nil))]
     (or murakumo
         (when (seq openrouter-key)
           (try
@@ -78,7 +78,7 @@
                            :body (json/parse-string true))
                   content (get-in resp [:choices 0 :message :content])]
               [(json/parse-string content false) "llm"])
-            (catch Exception _ nil)))
+            (catch #?(:clj Exception :default :default) _ nil)))
         [nil "deterministic"])))
 
 (defn call-llm-json
