@@ -1,0 +1,87 @@
+;; orgbrain risk-model tests — deterministic scoring of the org ontology schema.
+(ns lg.lg-kyber.tests.test-org-risk
+  (:require [clojure.test :refer [deftest is testing]]
+            [lg.lg-kyber.graphs.org-risk :as org-risk]))
+
+(def ^:private schema (org-risk/load-schema "docs/orgbrain/org-ontology.schema.edn"))
+
+(deftest test-load-schema
+  (testing "repo schema loads and has the three planes"
+    (is (seq (:orgbrain/roles schema)))
+    (is (seq (:orgbrain/delegations schema)))
+    (is (seq (:orgbrain/tasks schema)))))
+
+(deftest test-raci-coverage
+  (testing "the repo schema covers every critical task with an accountable role"
+    (is (zero? (org-risk/raci-coverage-risk schema))))
+  (testing "a critical task without accountable is flagged"
+    (let [s {:orgbrain/tasks
+             [{:orgbrain/task-id :a :orgbrain/critical? true
+               :orgbrain/raci {:responsible [:x] :accountable []}}
+              {:orgbrain/task-id :b :orgbrain/critical? true
+               :orgbrain/raci {:responsible [:x] :accountable [:y]}}]}]
+      (is (= 0.5 (org-risk/raci-coverage-risk s))))))
+
+(deftest test-authority-concentration
+  (testing "capped between 0 and 1 on the repo schema"
+    (let [r (org-risk/authority-concentration-risk schema)]
+      (is (<= 0.0 r 1.0))))
+  (testing "a role holding every authority scores 1.0"
+    (let [s {:orgbrain/authorities [:a :b :c]
+             :orgbrain/delegations
+             [{:orgbrain/from-role :src :orgbrain/to-role :solo :orgbrain/authority :a}
+              {:orgbrain/from-role :src :orgbrain/to-role :solo :orgbrain/authority :b}
+              {:orgbrain/from-role :src :orgbrain/to-role :solo :orgbrain/authority :c}]}]
+      (is (= 1.0 (org-risk/authority-concentration-risk s))))))
+
+(deftest test-delegation-depth
+  (testing "no delegations = no depth risk"
+    (is (= 0.0 (org-risk/delegation-depth-risk
+                {:orgbrain/roles [{:orgbrain/role-id :a}]
+                 :orgbrain/delegations []}))))
+  (testing "repo schema is bounded"
+    (let [r (org-risk/delegation-depth-risk schema)]
+      (is (<= 0.0 r 1.0)))))
+
+(deftest test-single-point-of-failure
+  (testing "critical task owned by a min-headcount-1 role is exposed"
+    (let [s {:orgbrain/roles [{:orgbrain/role-id :solo :orgbrain/min-headcount 1}]
+             :orgbrain/tasks
+             [{:orgbrain/task-id :t :orgbrain/critical? true
+               :orgbrain/raci {:accountable [:solo]}}]}]
+      (is (= 1.0 (org-risk/single-point-of-failure-risk s))))))
+
+(deftest test-approval-gap
+  (testing "repo schema delegates both spend and signing"
+    (is (zero? (org-risk/approval-gap-risk schema))))
+  (testing "missing sign-contract scores 0.5"
+    (is (= 0.5 (org-risk/approval-gap-risk
+                {:orgbrain/delegations
+                 [{:orgbrain/authority :approve-spend :orgbrain/to-role :x}]})))))
+
+(deftest test-risk-report-composite
+  (testing "composite is a weighted mean of the axes and carries a level"
+    (let [r (org-risk/risk-report schema)]
+      (is (every? number? (vals (:axes r))))
+      (is (<= 0.0 (:composite r) 1.0))
+      (is (contains? #{:low :moderate :elevated :critical} (:level r)))))
+  (testing "all-critical synthetic schema scores above an empty one"
+    (let [empty-r (:composite (org-risk/risk-report {:orgbrain/tasks [] :orgbrain/delegations []
+                                                     :orgbrain/roles []
+                                                     :orgbrain/authorities [:approve-spend :sign-contract]}))
+          bad-r (:composite (org-risk/risk-report
+                             {:orgbrain/roles [{:orgbrain/role-id :solo :orgbrain/min-headcount 1}]
+                              :orgbrain/authorities [:approve-spend :sign-contract]
+                              :orgbrain/delegations []
+                              :orgbrain/tasks
+                              [{:orgbrain/task-id :t :orgbrain/critical? true
+                                :orgbrain/raci {:accountable [:solo]}}]}))]
+      (is (> bad-r empty-r)))))
+
+(deftest test-bpmn-authority-audit
+  (testing "every authority-required element in the repo BPMN is delegated"
+    (let [bpmn (org-risk/load-schema
+                "docs/orgbrain/incorporation.bpmn.edn")
+          audit (org-risk/bpmn-authority-audit schema bpmn)]
+      (is (seq audit))
+      (is (every? :ok? audit)))))

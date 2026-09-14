@@ -171,8 +171,22 @@
               (or (and (= scheme "https") teams?)
                   (and (#{"http" "https"} scheme) loopback?
                        (<= 1 port 65535)))))
-       (catch Exception _ false))
-     :default false))
+       (catch #?(:clj Exception :default :default) _ false))
+     :default
+     (try
+       (let [u (js/URL. webhook)
+             scheme (.-protocol u)
+             host (.-hostname u)
+             teams? (or (= host "webhook.office.com")
+                        (.endsWith host ".webhook.office.com")
+                        (= host "logic.azure.com")
+                        (.endsWith host ".logic.azure.com"))]
+         (and host
+              (not (.includes (.-href u) "@"))
+              (or (and (= scheme "https:") teams?)
+                  (and (#{"http:" "https:"} scheme)
+                       (contains? #{"localhost" "127.0.0.1" "::1"} host)))))
+       (catch :default _ false))))
 
 (defn notify-with
   "Invoke a host-provided HTTP capability for an approved Teams endpoint, falling back

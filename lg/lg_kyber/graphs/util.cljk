@@ -7,7 +7,10 @@
   "date.today().isoformat() — ISO-8601 yyyy-MM-dd (UTC date)."
   []
   #?(:clj (str (java.time.LocalDate/now java.time.ZoneOffset/UTC))
-     :default (throw (ex-info "bind a today-iso impl on this host" {}))))
+     :default (let [d (js/Date.)]
+                (str (.getUTCFullYear d) "-"
+                     (subs (str "0" (inc (.getUTCMonth d))) -2) "-"
+                     (subs (str "0" (.getUTCDate d)) -2)))))
 
 (defn truncate
   "Python str(x)[:n] — string-cast then take the first n chars."
