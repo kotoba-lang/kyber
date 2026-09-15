@@ -48,4 +48,9 @@
   {:orgbrain/task-id :it-change-mgmt   :orgbrain/name "IT 変更管理"        :orgbrain/critical? true  :orgbrain/sla-days 5
    :orgbrain/raci {:responsible [:it-admin] :accountable [:cto] :consulted [] :informed []}}
   {:orgbrain/task-id :compliance-audit :orgbrain/name "コンプライアンス監査" :orgbrain/critical? true :orgbrain/sla-days 90
-   :orgbrain/raci {:responsible [:coo] :accountable [:board] :consulted [:cfo] :informed []}}]}
+   :orgbrain/raci {:responsible [:coo] :accountable [:board] :consulted [:cfo] :informed []}}
+ ;; 人事 (onboarding/offboarding) — added per SOUL extension order (HR first)
+  {:orgbrain/task-id :onboarding       :orgbrain/name "入社手続き"         :orgbrain/critical? false :orgbrain/sla-days 14
+   :orgbrain/raci {:responsible [:hr-manager] :accountable [:coo] :consulted [:it-admin] :informed [:finance-staff]}}
+  {:orgbrain/task-id :offboarding      :orgbrain/name "退職手続き"         :orgbrain/critical? true  :orgbrain/sla-days 5
+   :orgbrain/raci {:responsible [:hr-manager] :accountable [:coo] :consulted [:it-admin] :informed [:cfo]}}]}
