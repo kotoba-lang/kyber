@@ -53,4 +53,9 @@
   {:orgbrain/task-id :onboarding       :orgbrain/name "入社手続き"         :orgbrain/critical? false :orgbrain/sla-days 14
    :orgbrain/raci {:responsible [:hr-manager] :accountable [:coo] :consulted [:it-admin] :informed [:finance-staff]}}
   {:orgbrain/task-id :offboarding      :orgbrain/name "退職手続き"         :orgbrain/critical? true  :orgbrain/sla-days 5
-   :orgbrain/raci {:responsible [:hr-manager] :accountable [:coo] :consulted [:it-admin] :informed [:cfo]}}]}
+   :orgbrain/raci {:responsible [:hr-manager] :accountable [:coo] :consulted [:it-admin] :informed [:cfo]}}
+ ;; 財務 (invoice→payment) — added per SOUL extension order (finance second)
+  {:orgbrain/task-id :invoice-issuance  :orgbrain/name "請求書発行"       :orgbrain/critical? false :orgbrain/sla-days 5
+   :orgbrain/raci {:responsible [:finance-staff] :accountable [:cfo] :consulted [] :informed [:coo]}}
+  {:orgbrain/task-id :payment-execution :orgbrain/name "支払承認・実行"   :orgbrain/critical? true  :orgbrain/sla-days 3
+   :orgbrain/raci {:responsible [:finance-staff] :accountable [:cfo] :consulted [] :informed [:board]}}]}

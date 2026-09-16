@@ -83,7 +83,7 @@
     (let [ids (set (map :orgbrain/task-id (:orgbrain/tasks schema)))]
       (is (contains? ids :onboarding))
       (is (contains? ids :offboarding))
-      (is (= 8 (count (:orgbrain/tasks schema))))))
+      (is (= 10 (count (:orgbrain/tasks schema))))))
   (testing "the added HR critical task still has accountable coverage"
     (is (zero? (org-risk/raci-coverage-risk schema))))
   (testing "the HR BPMN audits cleanly against the schema delegations"
@@ -98,6 +98,27 @@
              [{:orgbrain/task-id :offboarding :orgbrain/critical? true
                :orgbrain/raci {:responsible [:hr-manager] :accountable [:coo]}}]}]
       (is (= 1.0 (org-risk/single-point-of-failure-risk s))))))
+
+(deftest test-finance-process
+  (testing "finance invoice→payment tasks are defined in the schema"
+    (let [ids (set (map :orgbrain/task-id (:orgbrain/tasks schema)))]
+      (is (contains? ids :invoice-issuance))
+      (is (contains? ids :payment-execution))))
+  (testing "the added finance critical task still has accountable coverage"
+    (is (zero? (org-risk/raci-coverage-risk schema))))
+  (testing "the payment-execution accountable role holds the spend authority"
+    (let [holders (->> (:orgbrain/delegations schema)
+                       (filter #(= :approve-spend (:orgbrain/authority %)))
+                       (map :orgbrain/to-role)
+                       set)]
+      (is (contains? holders :cfo))
+      (is (contains? holders :finance-staff))))
+  (testing "the finance BPMN audits cleanly against the schema delegations"
+    (let [bpmn (org-risk/load-schema
+                "docs/orgbrain/invoice-to-payment.bpmn.edn")
+          audit (org-risk/bpmn-authority-audit schema bpmn)]
+      (is (seq audit))
+      (is (every? :ok? audit)))))
 
 (deftest test-bpmn-authority-audit
   (testing "every authority-required element in the repo BPMN is delegated"
