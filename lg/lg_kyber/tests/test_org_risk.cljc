@@ -78,6 +78,27 @@
                                 :orgbrain/raci {:accountable [:solo]}}]}))]
       (is (> bad-r empty-r)))))
 
+(deftest test-hr-process
+  (testing "HR onboarding/offboarding is defined in the schema"
+    (let [ids (set (map :orgbrain/task-id (:orgbrain/tasks schema)))]
+      (is (contains? ids :onboarding))
+      (is (contains? ids :offboarding))
+      (is (= 8 (count (:orgbrain/tasks schema))))))
+  (testing "the added HR critical task still has accountable coverage"
+    (is (zero? (org-risk/raci-coverage-risk schema))))
+  (testing "the HR BPMN audits cleanly against the schema delegations"
+    (let [bpmn (org-risk/load-schema
+                "docs/orgbrain/onboarding-offboarding.bpmn.edn")
+          audit (org-risk/bpmn-authority-audit schema bpmn)]
+      (is (seq audit))
+      (is (every? :ok? audit))))
+  (testing "offboarding's accountable role is a single point of failure risk axis"
+    (let [s {:orgbrain/roles [{:orgbrain/role-id :coo :orgbrain/min-headcount 1}]
+             :orgbrain/tasks
+             [{:orgbrain/task-id :offboarding :orgbrain/critical? true
+               :orgbrain/raci {:responsible [:hr-manager] :accountable [:coo]}}]}]
+      (is (= 1.0 (org-risk/single-point-of-failure-risk s))))))
+
 (deftest test-bpmn-authority-audit
   (testing "every authority-required element in the repo BPMN is delegated"
     (let [bpmn (org-risk/load-schema
