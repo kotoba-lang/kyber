@@ -83,7 +83,7 @@
     (let [ids (set (map :orgbrain/task-id (:orgbrain/tasks schema)))]
       (is (contains? ids :onboarding))
       (is (contains? ids :offboarding))
-      (is (= 10 (count (:orgbrain/tasks schema))))))
+      (is (= 11 (count (:orgbrain/tasks schema))))))
   (testing "the added HR critical task still has accountable coverage"
     (is (zero? (org-risk/raci-coverage-risk schema))))
   (testing "the HR BPMN audits cleanly against the schema delegations"
@@ -116,6 +116,25 @@
   (testing "the finance BPMN audits cleanly against the schema delegations"
     (let [bpmn (org-risk/load-schema
                 "docs/orgbrain/invoice-to-payment.bpmn.edn")
+          audit (org-risk/bpmn-authority-audit schema bpmn)]
+      (is (seq audit))
+      (is (every? :ok? audit)))))
+
+(deftest test-legal-process
+  (testing "the legal contract-review task is defined in the schema"
+    (let [ids (set (map :orgbrain/task-id (:orgbrain/tasks schema)))]
+      (is (contains? ids :contract-review))))
+  (testing "the added legal critical task still has accountable coverage"
+    (is (zero? (org-risk/raci-coverage-risk schema))))
+  (testing "the contract-review accountable role holds the sign-contract authority"
+    (let [holders (->> (:orgbrain/delegations schema)
+                       (filter #(= :sign-contract (:orgbrain/authority %)))
+                       (map :orgbrain/to-role)
+                       set)]
+      (is (contains? holders :ceo))))
+  (testing "the legal BPMN audits cleanly against the schema delegations"
+    (let [bpmn (org-risk/load-schema
+                "docs/orgbrain/contract-review.bpmn.edn")
           audit (org-risk/bpmn-authority-audit schema bpmn)]
       (is (seq audit))
       (is (every? :ok? audit)))))
