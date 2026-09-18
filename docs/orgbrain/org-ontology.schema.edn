@@ -58,4 +58,7 @@
   {:orgbrain/task-id :invoice-issuance  :orgbrain/name "請求書発行"       :orgbrain/critical? false :orgbrain/sla-days 5
    :orgbrain/raci {:responsible [:finance-staff] :accountable [:cfo] :consulted [] :informed [:coo]}}
   {:orgbrain/task-id :payment-execution :orgbrain/name "支払承認・実行"   :orgbrain/critical? true  :orgbrain/sla-days 3
-   :orgbrain/raci {:responsible [:finance-staff] :accountable [:cfo] :consulted [] :informed [:board]}}]}
+   :orgbrain/raci {:responsible [:finance-staff] :accountable [:cfo] :consulted [] :informed [:board]}}
+ ;; 法務 (契約審査) — added per SOUL extension order (legal third)
+  {:orgbrain/task-id :contract-review   :orgbrain/name "契約審査"         :orgbrain/critical? true  :orgbrain/sla-days 10
+   :orgbrain/raci {:responsible [:coo] :accountable [:ceo] :consulted [:cfo] :informed [:board]}}]}
