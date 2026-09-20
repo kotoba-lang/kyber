@@ -83,7 +83,7 @@
     (let [ids (set (map :orgbrain/task-id (:orgbrain/tasks schema)))]
       (is (contains? ids :onboarding))
       (is (contains? ids :offboarding))
-      (is (= 11 (count (:orgbrain/tasks schema))))))
+      (is (= 13 (count (:orgbrain/tasks schema))))))
   (testing "the added HR critical task still has accountable coverage"
     (is (zero? (org-risk/raci-coverage-risk schema))))
   (testing "the HR BPMN audits cleanly against the schema delegations"
@@ -138,6 +138,34 @@
           audit (org-risk/bpmn-authority-audit schema bpmn)]
       (is (seq audit))
       (is (every? :ok? audit)))))
+
+(deftest test-it-process
+  (testing "IT access-provisioning tasks are defined in the schema"
+    (let [ids (set (map :orgbrain/task-id (:orgbrain/tasks schema)))]
+      (is (contains? ids :access-grant))
+      (is (contains? ids :access-review))))
+  (testing "the added IT critical task still has accountable coverage"
+    (is (zero? (org-risk/raci-coverage-risk schema))))
+  (testing "the access-review accountable role (CTO) holds the it-admin authority"
+    (let [holders (->> (:orgbrain/delegations schema)
+                       (filter #(= :it-admin (:orgbrain/authority %)))
+                       (map :orgbrain/to-role)
+                       set)]
+      (is (contains? holders :cto))
+      (is (contains? holders :it-admin))))
+  (testing "the IT BPMN audits cleanly against the schema delegations"
+    (let [bpmn (org-risk/load-schema
+                "docs/orgbrain/it-access-provisioning.bpmn.edn")
+          audit (org-risk/bpmn-authority-audit schema bpmn)]
+      (is (seq audit))
+      (is (every? :ok? audit))))
+  (testing "privileged approval concentrated in a single CTO is a SPOF axis"
+    (let [s {:orgbrain/roles [{:orgbrain/role-id :cto :orgbrain/min-headcount 1}
+                              {:orgbrain/role-id :it-admin :orgbrain/min-headcount 2}]
+             :orgbrain/tasks
+             [{:orgbrain/task-id :access-review :orgbrain/critical? true
+               :orgbrain/raci {:responsible [:it-admin] :accountable [:cto]}}]}]
+      (is (= 1.0 (org-risk/single-point-of-failure-risk s))))))
 
 (deftest test-bpmn-authority-audit
   (testing "every authority-required element in the repo BPMN is delegated"
