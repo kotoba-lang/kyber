@@ -32,7 +32,9 @@
   {:orgbrain/from-role :board :orgbrain/to-role :board         :orgbrain/authority :sign-contract}
   {:orgbrain/from-role :board :orgbrain/to-role :board         :orgbrain/authority :hire}
   {:orgbrain/from-role :ceo   :orgbrain/to-role :coo           :orgbrain/authority :sign-contract}
-  {:orgbrain/from-role :ceo   :orgbrain/to-role :cfo           :orgbrain/authority :sign-contract}]
+  {:orgbrain/from-role :ceo   :orgbrain/to-role :cfo           :orgbrain/authority :sign-contract}
+  ;; IT (access provisioning) — CTO が特権昇格承認・レビュー権限を自己保持 (board 自己委任方式を踏襲)
+  {:orgbrain/from-role :cto   :orgbrain/to-role :cto           :orgbrain/authority :it-admin}]
 
  ;; RACI matrix: task × roles. Every critical task MUST have exactly one :accountable
  ;; (raci-coverage-risk flags the gap).
@@ -61,4 +63,9 @@
    :orgbrain/raci {:responsible [:finance-staff] :accountable [:cfo] :consulted [] :informed [:board]}}
  ;; 法務 (契約審査) — added per SOUL extension order (legal third)
   {:orgbrain/task-id :contract-review   :orgbrain/name "契約審査"         :orgbrain/critical? true  :orgbrain/sla-days 10
-   :orgbrain/raci {:responsible [:coo] :accountable [:ceo] :consulted [:cfo] :informed [:board]}}]}
+   :orgbrain/raci {:responsible [:coo] :accountable [:ceo] :consulted [:cfo] :informed [:board]}}
+ ;; IT (access provisioning) — added per SOUL extension order (IT fourth)
+  {:orgbrain/task-id :access-grant      :orgbrain/name "アクセス権払出"   :orgbrain/critical? false :orgbrain/sla-days 3
+   :orgbrain/raci {:responsible [:it-admin] :accountable [:cto] :consulted [:hr-manager] :informed []}}
+  {:orgbrain/task-id :access-review     :orgbrain/name "四半期アクセスレビュー" :orgbrain/critical? true :orgbrain/sla-days 30
+   :orgbrain/raci {:responsible [:it-admin] :accountable [:cto] :consulted [] :informed [:coo]}}]}
