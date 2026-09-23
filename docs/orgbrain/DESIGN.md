@@ -23,7 +23,7 @@ kyber の拡張面。
                    各 task に :actor-role と :authority-required を紐付け、
                    第1層の権限定義と照合できる。
 
-第3層  risk        lg/lg_kyber/graphs/org_risk.cljc (+ test)
+第3層  risk        lg/lg_kyber/graphs/org_risk.cljk (+ test)
                    決定論的リスク計算:
                      - RACI カバレッジ (責任の空白 = governance risk)
                    - 権限過集中 (1 role が全 critical task を持つ = concentration risk)
