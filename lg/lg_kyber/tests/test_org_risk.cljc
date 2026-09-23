@@ -83,7 +83,7 @@
     (let [ids (set (map :orgbrain/task-id (:orgbrain/tasks schema)))]
       (is (contains? ids :onboarding))
       (is (contains? ids :offboarding))
-      (is (= 13 (count (:orgbrain/tasks schema))))))
+      (is (= 15 (count (:orgbrain/tasks schema))))))
   (testing "the added HR critical task still has accountable coverage"
     (is (zero? (org-risk/raci-coverage-risk schema))))
   (testing "the HR BPMN audits cleanly against the schema delegations"
@@ -165,6 +165,32 @@
              :orgbrain/tasks
              [{:orgbrain/task-id :access-review :orgbrain/critical? true
                :orgbrain/raci {:responsible [:it-admin] :accountable [:cto]}}]}]
+      (is (= 1.0 (org-risk/single-point-of-failure-risk s))))))
+
+(deftest test-incident-process
+  (testing "crisis incident-escalation tasks are defined in the schema"
+    (let [ids (set (map :orgbrain/task-id (:orgbrain/tasks schema)))]
+      (is (contains? ids :incident-command))
+      (is (contains? ids :incident-reporting))))
+  (testing "the added incident critical tasks still have accountable coverage"
+    (is (zero? (org-risk/raci-coverage-risk schema))))
+  (testing "the incident-command accountable role (COO) holds the compliance authority"
+    (let [holders (->> (:orgbrain/delegations schema)
+                       (filter #(= :compliance (:orgbrain/authority %)))
+                       (map :orgbrain/to-role)
+                       set)]
+      (is (contains? holders :coo))))
+  (testing "the crisis BPMN audits cleanly against the schema delegations"
+    (let [bpmn (org-risk/load-schema
+                "docs/orgbrain/incident-escalation.bpmn.edn")
+          audit (org-risk/bpmn-authority-audit schema bpmn)]
+      (is (seq audit))
+      (is (every? :ok? audit))))
+  (testing "incident reporting accountable to a min-headcount-1 board role is a SPOF axis"
+    (let [s {:orgbrain/roles [{:orgbrain/role-id :board :orgbrain/min-headcount 1}]
+             :orgbrain/tasks
+             [{:orgbrain/task-id :incident-reporting :orgbrain/critical? true
+               :orgbrain/raci {:responsible [:coo] :accountable [:board]}}]}]
       (is (= 1.0 (org-risk/single-point-of-failure-risk s))))))
 
 (deftest test-bpmn-authority-audit
