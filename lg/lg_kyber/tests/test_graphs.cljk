@@ -2,7 +2,7 @@
   "clj-port test-suite for the lg-kyber graphs (port of the implicit python behaviour;
   ADR-2606280030). Every ported graph compiles AND invokes under bb; the injected
   db-api / llm-api seams drive deterministic runs that assert the python's shapes."
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [kotoba.test :refer [deftest is testing]]
             [lg.lg-kyber.db :as db]
             [lg.lg-kyber.graphs.llm :as llm]
             [lg.lg-kyber.graphs.util :as u]

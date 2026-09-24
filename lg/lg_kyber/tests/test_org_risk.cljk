@@ -1,6 +1,6 @@
 ;; orgbrain risk-model tests — deterministic scoring of the org ontology schema.
 (ns lg.lg-kyber.tests.test-org-risk
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [kotoba.test :refer [deftest is testing]]
             [lg.lg-kyber.graphs.org-risk :as org-risk]))
 
 (def ^:private schema (org-risk/load-schema "docs/orgbrain/org-ontology.schema.edn"))

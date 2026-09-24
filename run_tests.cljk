@@ -9,7 +9,7 @@
 ;;   its own dir (and $KBB_CLASSPATH entries) before requiring the suites;
 ;; - babashka.classpath / babashka.http-client are NOT exposed by the engine,
 ;;   so classpath and env access go through nbb.classpath / js/process.
-(require '[clojure.test :as t])
+(require '[kotoba.test :as t])
 
 (def ^:private root-dir
   (let [f (str *file*)
