@@ -34,7 +34,7 @@
   multiple db sources, :db.unique/value conflict errors (treated as
   identity/upsert), d/history."
   (:require [clojure.string :as str]
-            [clojure.set :as set]))
+            [kotoba.lang.coll :as set]))
 
 ;; ───────────────────────── db value & conn ─────────────────────────
 
