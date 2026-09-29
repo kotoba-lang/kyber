@@ -4,7 +4,7 @@ Single asyncpg pool per pod process, bounded at 10 connections. Connects
 directly to RisingWave PG :4566 using RW_URL (k8s Secret
 `kyber-rw-root-creds`). The pool is sized for steady-state cron + on-demand.
 
-graph-schema CLAUDE.md §"Hyperdrive + pg.Pool Configuration" enforces
+graph-schema AGENTS.md §"Hyperdrive + pg.Pool Configuration" enforces
 serial writes inside one request; callers MUST NOT `asyncio.gather` two
 writes against the same pool.
 """
