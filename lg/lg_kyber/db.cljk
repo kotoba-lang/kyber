@@ -13,7 +13,7 @@
      :fetch    (fn [query & args] -> [row-map …])
      :execute  (fn [query & args] -> status-string)}
 
-  This mirrors the repo's `:db-api` convention (CLAUDE.md §Actors: backends speak through
+  This mirrors the repo's `:db-api` convention (AGENTS.md §Actors: backends speak through
   a `{:q :transact! :db :pull :entid}`-style map; here it is the narrower fetch/exec trio
   the kyber graphs use)."
   (:require [kotoba.lang.text :as str]))
